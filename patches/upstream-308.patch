@@ -1,0 +1,60 @@
+From 6a7dfe75fc373bef2289dc64fa02f569a06afbd6 Mon Sep 17 00:00:00 2001
+From: Guillaume Mallet <guillaume.mallet@complyadvantage.com>
+Date: Tue, 10 Dec 2019 12:13:24 +0000
+Subject: [PATCH] Allow passing auth details through env variables
+
+---
+ README.md | 5 +++++
+ main.go   | 9 +++++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/README.md b/README.md
+index e02c2b1..a36e6c9 100644
+--- a/README.md
++++ b/README.md
+@@ -56,6 +56,8 @@ elasticsearch_exporter --help
+ | es.client-cert          | 1.0.2                 | Path to PEM file that contains the corresponding cert for the private key to connect to Elasticsearch. | |
+ | es.clusterinfo.interval | 1.1.0rc1              |  Cluster info update interval for the cluster label | 5m |
+ | es.ssl-skip-verify      | 1.0.4rc1              | Skip SSL verification when connecting to Elasticsearch. | false |
++| es.username             | 1.2.0                 | Username to use for connecting to Elasticsearch | false |
++| es.password             | 1.2.0                 | Password to use for connecting to Elasticsearch | false |
+ | web.listen-address      | 1.0.2                 | Address to listen on for web interface and telemetry. | :9114 |
+ | web.telemetry-path      | 1.0.2                 | Path under which to expose metrics. | /metrics |
+ | version                 | 1.0.2                 | Show version info on stdout and exit. | |
+@@ -66,6 +68,9 @@ by replacing `.` and `-` with `_` and upper-casing the parameter name.
+ 
+ #### Elasticsearch 7.x security privileges
+ 
++Username and password can be passed either directly in the URI or through the arguments `es.username` and `es.password`.
++Specifying those two arguments will override authentication passed in the URI (if any).
++
+ ES 7.x supports RBACs. The following security privileges are required for the elasticsearch_exporter.
+ 
+ Setting | Privilege Required | Description
+diff --git a/main.go b/main.go
+index 4749783..7f3d87e 100644
+--- a/main.go
++++ b/main.go
+@@ -68,6 +68,12 @@ func main() {
+ 		esInsecureSkipVerify = kingpin.Flag("es.ssl-skip-verify",
+ 			"Skip SSL verification when connecting to Elasticsearch.").
+ 			Default("false").Envar("ES_SSL_SKIP_VERIFY").Bool()
++		esUsername = kingpin.Flag("es.username",
++			"Username to use for ES basic auth").
++			Default("").Envar("ES_USERNAME").String()
++		esPassword = kingpin.Flag("es.password",
++			"Password to use for ES basic auth").
++			Default("").Envar("ES_PASSWORD").String()
+ 		logLevel = kingpin.Flag("log.level",
+ 			"Sets the loglevel. Valid levels are debug, info, warn, error").
+ 			Default("info").Envar("LOG_LEVEL").String()
+@@ -93,6 +99,9 @@ func main() {
+ 		)
+ 		os.Exit(1)
+ 	}
++	if *esUsername != "" && *esPassword != "" {
++		esURL.User = url.UserPassword(*esUsername, *esPassword)
++	}
+ 
+ 	// returns nil if not provided and falls back to simple TCP.
+ 	tlsConfig := createTLSConfig(*esCA, *esClientCert, *esClientPrivateKey, *esInsecureSkipVerify)
