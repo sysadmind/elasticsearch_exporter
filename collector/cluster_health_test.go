@@ -20,7 +20,9 @@ func TestClusterHealth(t *testing.T) {
 			defer f.Close()
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				io.Copy(w, f)
+				if _, err := io.Copy(w, f); err != nil {
+					t.Fatalf("failed copy: %s", err)
+				}
 			}))
 			defer ts.Close()
 

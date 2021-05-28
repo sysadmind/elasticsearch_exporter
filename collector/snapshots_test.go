@@ -71,5 +71,4 @@ func TestSnapshots(t *testing.T) {
 			t.Errorf("Bad number of repository snapshots")
 		}
 	}
-
 }

@@ -231,7 +231,7 @@ func main() {
 }
 
 func createClient(transport *http.Transport, globalTimeout, timeout time.Duration) *http.Client {
-	var c = &http.Client{
+	c := &http.Client{
 		Timeout:   globalTimeout,
 		Transport: transport,
 	}

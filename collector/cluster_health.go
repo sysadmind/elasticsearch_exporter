@@ -271,7 +271,7 @@ func (c *ClusterHealth) fetchAndDecodeClusterHealth() (clusterHealthResponse, er
 
 // Collect collects ClusterHealth metrics.
 func (c *ClusterHealth) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	var err error
 	c.totalScrapes.Inc()
 	defer func() {

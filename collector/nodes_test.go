@@ -22,13 +22,17 @@ func TestNodesStats(t *testing.T) {
 
 		handlers := map[string]http.Handler{
 			"plain": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write(data)
+				if _, err := w.Write(data); err != nil {
+					t.Fatalf("failed write: %s", err)
+				}
 			}),
 			"basicauth": &basicAuth{
 				User: "elastic",
 				Pass: "changeme",
 				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.Write(data)
+					if _, err := w.Write(data); err != nil {
+						t.Fatalf("failed write: %s", err)
+					}
 				}),
 			},
 		}
@@ -142,7 +146,7 @@ type basicAuth struct {
 	Next http.Handler
 }
 
-func (h *basicAuth) checkAuth(w http.ResponseWriter, r *http.Request) bool {
+func (h *basicAuth) checkAuth(_ http.ResponseWriter, r *http.Request) bool {
 	s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(s) != 2 {
 		return false
@@ -168,7 +172,7 @@ func (h *basicAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !h.checkAuth(w, r) {
 		w.Header().Set("WWW-Authenticate", "Basic realm=\"ES\"")
 		w.WriteHeader(401)
-		w.Write([]byte("401 Unauthorized\n"))
+		_, _ = w.Write([]byte("401 Unauthorized\n"))
 		return
 	}
 

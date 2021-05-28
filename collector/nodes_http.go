@@ -14,20 +14,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
-	defaultNodeHTTPLabelValues = func(cluster string, node NodeHTTPStatsNode) []string {
-		roles := getRoles(node)
-		return []string{
-			cluster,
-			node.Host,
-			node.Name,
-			fmt.Sprintf("%t", roles["master"]),
-			fmt.Sprintf("%t", roles["data"]),
-			fmt.Sprintf("%t", roles["ingest"]),
-			fmt.Sprintf("%t", roles["client"]),
-		}
+var defaultNodeHTTPLabelValues = func(cluster string, node NodeHTTPStatsNode) []string {
+	roles := getRoles(node)
+	return []string{
+		cluster,
+		node.Host,
+		node.Name,
+		fmt.Sprintf("%t", roles["master"]),
+		fmt.Sprintf("%t", roles["data"]),
+		fmt.Sprintf("%t", roles["ingest"]),
+		fmt.Sprintf("%t", roles["client"]),
 	}
-)
+}
 
 type nodeHTTPMetric struct {
 	Type   prometheus.ValueType
@@ -153,7 +151,7 @@ func (c *NodesHTTP) fetchAndDecodeNodeStats() (nodeHTTPStatsResponse, error) {
 
 // Collect gets nodes metric values
 func (c *NodesHTTP) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	c.totalScrapes.Inc()
 	defer func() {
 		_ = level.Debug(c.logger).Log("msg", "scrape took", "seconds", time.Since(now).Seconds())

@@ -30,7 +30,6 @@ const (
 type mockES struct{}
 
 func (mockES) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	fmt.Fprintf(w, `{
   "name" : "%s",
   "cluster_name" : "%s",
@@ -62,7 +61,8 @@ type mockConsumer struct {
 	ch   chan *Response
 }
 
-func newMockConsumer(ctx context.Context, name string, t *testing.T) *mockConsumer {
+func newMockConsumer(ctx context.Context, tb testing.TB, name string) *mockConsumer {
+	tb.Helper()
 	mc := &mockConsumer{
 		name: name,
 		ch:   make(chan *Response),
@@ -72,7 +72,7 @@ func newMockConsumer(ctx context.Context, name string, t *testing.T) *mockConsum
 			select {
 			case d := <-mc.ch:
 				mc.data = d
-				t.Logf("consumer %s received data from channel: %+v\n", mc, mc.data)
+				tb.Logf("consumer %s received data from channel: %+v\n", mc, mc.data)
 			case <-ctx.Done():
 				return
 			}
@@ -111,7 +111,7 @@ func TestRetriever_RegisterConsumer(t *testing.T) {
 	defer cancel()
 	consumerNames := []string{"consumer-1", "consumer-2"}
 	for _, n := range consumerNames {
-		c := newMockConsumer(ctx, n, t)
+		c := newMockConsumer(ctx, t, n)
 		if err := retriever.RegisterConsumer(c); err != nil {
 			t.Errorf("failed to register consumer: %s", err)
 		}
@@ -126,7 +126,7 @@ func TestRetriever_fetchAndDecodeClusterInfo(t *testing.T) {
 	versionNumber, _ := semver.Make(versionNumber)
 	luceneVersion, _ := semver.Make(luceneVersion)
 
-	var expected = &Response{
+	expected := &Response{
 		Name:        nodeName,
 		ClusterName: clusterName,
 		ClusterUUID: clusterUUID,
@@ -170,13 +170,15 @@ func TestRetriever_Run(t *testing.T) {
 	// setup mock consumer
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	mc := newMockConsumer(ctx, "test-consumer", t)
+	mc := newMockConsumer(ctx, t, "test-consumer")
 	if err := retriever.RegisterConsumer(mc); err != nil {
 		t.Fatalf("failed to register consumer: %s", err)
 	}
 
 	// start retriever
-	retriever.Run(ctx)
+	if err := retriever.Run(ctx); err != nil {
+		t.Fatalf("failed to start retriever: %s", err)
+	}
 
 	// trigger update
 	retriever.Update()

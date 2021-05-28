@@ -54,7 +54,6 @@ type Indices struct {
 
 // NewIndices defines Indices Prometheus metrics
 func NewIndices(ctx context.Context, logger log.Logger, client *http.Client, url *url.URL, shards bool, interval time.Duration) *Indices {
-
 	indexLabels := labels{
 		keys: func(...string) []string {
 			return []string{"index", "cluster"}
@@ -1001,8 +1000,8 @@ func NewIndices(ctx context.Context, logger log.Logger, client *http.Client, url
 	go func() {
 		_ = level.Debug(logger).Log("msg", "starting cluster info receive loop")
 		for ci := range indices.clusterInfoCh {
-			_ = level.Debug(logger).Log("msg", "received cluster info update", "cluster", ci.ClusterName)
 			if ci != nil {
+				_ = level.Debug(logger).Log("msg", "received cluster info update", "cluster", ci.ClusterName)
 				indices.lastClusterInfo = ci
 			}
 		}
@@ -1037,7 +1036,7 @@ func (i *Indices) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect gets Indices metric values
 func (i *Indices) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	i.totalScrapes.Inc()
 	defer func() {
 		_ = level.Debug(i.logger).Log("msg", "scrape took", "seconds", time.Since(now).Seconds())
@@ -1062,7 +1061,7 @@ func (i *Indices) Collect(ch chan<- prometheus.Metric) {
 	i.up.Set(1)
 
 	// Index stats
-	var indexStatsResp = i.updater.lastResponse
+	indexStatsResp := i.updater.lastResponse
 	for indexName, indexStats := range indexStatsResp.Indices {
 		for _, metric := range i.indexMetrics {
 			ch <- prometheus.MustNewConstMetric(
@@ -1071,7 +1070,6 @@ func (i *Indices) Collect(ch chan<- prometheus.Metric) {
 				metric.Value(indexStats),
 				metric.Labels.values(i.lastClusterInfo, indexName)...,
 			)
-
 		}
 		if i.updater.shards {
 			for _, metric := range i.shardMetrics {

@@ -206,7 +206,7 @@ func NewSnapshots(ctx context.Context, logger log.Logger, client *http.Client, u
 				),
 				Value: func(snapshotsStats SnapshotStatsResponse) float64 {
 					for i := len(snapshotsStats.Snapshots) - 1; i >= 0; i-- {
-						var snap = snapshotsStats.Snapshots[i]
+						snap := snapshotsStats.Snapshots[i]
 						if snap.State == "SUCCESS" || snap.State == "PARTIAL" {
 							return float64(snap.StartTimeInMillis / 1000)
 						}
@@ -234,7 +234,7 @@ func (s *Snapshots) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect gets Snapshots metric values
 func (s *Snapshots) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	s.totalScrapes.Inc()
 	defer func() {
 		_ = level.Debug(s.logger).Log("msg", "scrape took", "seconds", time.Since(now).Seconds())
@@ -359,10 +359,7 @@ func (upt *snapshotsUpdater) getAndParseURL(u *url.URL, data interface{}) error 
 		return err
 	}
 
-	if err := json.Unmarshal(bts, data); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(bts, data)
 }
 
 func (upt *snapshotsUpdater) fetchAndDecodeSnapshotsStats() (map[string]SnapshotStatsResponse, error) {

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"io"
 	"os"
+	"strings"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"io"
-	"strings"
 )
 
 func getLogger(loglevel, logoutput, logfmt string) log.Logger {

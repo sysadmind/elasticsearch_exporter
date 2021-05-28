@@ -93,7 +93,6 @@ func (cs *IndicesSettings) getAndParseURL(u *url.URL, data interface{}) error {
 }
 
 func (cs *IndicesSettings) fetchAndDecodeIndicesSettings() (IndicesSettingsResponse, error) {
-
 	u := *cs.url
 	u.Path = path.Join(u.Path, "/_all/_settings")
 	var asr IndicesSettingsResponse
@@ -107,7 +106,6 @@ func (cs *IndicesSettings) fetchAndDecodeIndicesSettings() (IndicesSettingsRespo
 
 // Collect gets all indices settings metric values
 func (cs *IndicesSettings) Collect(ch chan<- prometheus.Metric) {
-
 	cs.totalScrapes.Inc()
 	defer func() {
 		ch <- cs.up

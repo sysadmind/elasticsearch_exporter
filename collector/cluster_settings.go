@@ -110,7 +110,6 @@ func (cs *ClusterSettings) getAndParseURL(u *url.URL, data interface{}) error {
 }
 
 func (cs *ClusterSettings) fetchAndDecodeClusterSettingsStats() (ClusterSettingsResponse, error) {
-
 	u := *cs.url
 	u.Path = path.Join(u.Path, "/_cluster/settings")
 	q := u.Query()
@@ -138,7 +137,7 @@ func (cs *ClusterSettings) fetchAndDecodeClusterSettingsStats() (ClusterSettings
 
 // Collect gets cluster settings  metric values
 func (cs *ClusterSettings) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	cs.totalScrapes.Inc()
 	defer func() {
 		_ = level.Debug(cs.logger).Log("msg", "scrape took", "seconds", time.Since(now).Seconds())

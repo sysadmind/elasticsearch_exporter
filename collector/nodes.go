@@ -173,7 +173,7 @@ type Nodes struct {
 
 // NewNodes defines Nodes Prometheus metrics
 func NewNodes(ctx context.Context, logger log.Logger, client *http.Client, url *url.URL, all bool, node string, interval time.Duration) *Nodes {
-	var nodes = &Nodes{
+	nodes := &Nodes{
 		logger: logger,
 		updater: &nodeStatsUpdater{
 			logger:   logger,
@@ -1814,7 +1814,7 @@ func (c *Nodes) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect gets nodes metric values
 func (c *Nodes) Collect(ch chan<- prometheus.Metric) {
-	var now = time.Now()
+	now := time.Now()
 	c.totalScrapes.Inc()
 	defer func() {
 		_ = level.Debug(c.logger).Log("msg", "scrape took", "seconds", time.Since(now).Seconds())
@@ -1837,7 +1837,7 @@ func (c *Nodes) Collect(ch chan<- prometheus.Metric) {
 	}
 	c.up.Set(1)
 
-	var nodeStatsResp = c.updater.lastResponse
+	nodeStatsResp := c.updater.lastResponse
 	for _, node := range nodeStatsResp.Nodes {
 		// Handle the node labels metric
 		roles := getRoles(node)
