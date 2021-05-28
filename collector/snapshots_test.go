@@ -26,6 +26,17 @@ func TestSnapshots(t *testing.T) {
 	//  curl http://localhost:9200/_snapshot/
 	//  curl http://localhost:9200/_snapshot/test1/_all
 
+	// This is to prevent a variable scoping issue that causes a race condition in the below for loop
+	makeHandler := func(input []string) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.RequestURI == "/_snapshot" {
+				fmt.Fprint(w, input[0])
+				return
+			}
+			fmt.Fprint(w, input[1])
+		})
+	}
+
 	tcs := map[string][]string{
 		"1.7.6":        {`{"test1":{"type":"fs","settings":{"location":"/tmp/test1"}}}`, `{"snapshots":[{"snapshot":"snapshot_1","version_id":1070699,"version":"1.7.6","indices":["foo_1","foo_2"],"state":"SUCCESS","start_time":"2018-09-04T09:09:02.427Z","start_time_in_millis":1536052142427,"end_time":"2018-09-04T09:09:02.755Z","end_time_in_millis":1536052142755,"duration_in_millis":328,"failures":[],"shards":{"total":10,"failed":0,"successful":10}}]}`},
 		"2.4.5":        {`{"test1":{"type":"fs","settings":{"location":"/tmp/test1"}}}`, `{"snapshots":[{"snapshot":"snapshot_1","version_id":2040599,"version":"2.4.5","indices":["foo_2","foo_1"],"state":"SUCCESS","start_time":"2018-09-04T09:25:25.818Z","start_time_in_millis":1536053125818,"end_time":"2018-09-04T09:25:26.326Z","end_time_in_millis":1536053126326,"duration_in_millis":508,"failures":[],"shards":{"total":10,"failed":0,"successful":10}}]}`},
@@ -33,13 +44,7 @@ func TestSnapshots(t *testing.T) {
 		"5.4.2-failed": {`{"test1":{"type":"fs","settings":{"location":"/tmp/test1"}}}`, `{"snapshots":[{"snapshot":"snapshot_1","uuid":"VZ_c_kKISAW8rpcqiwSg0w","version_id":5040299,"version":"5.4.2","indices":["foo_2","foo_1"],"state":"SUCCESS","start_time":"2018-09-04T09:29:13.971Z","start_time_in_millis":1536053353971,"end_time":"2018-09-04T09:29:14.477Z","end_time_in_millis":1536053354477,"duration_in_millis":506,"failures":[{"index" : "index_name","index_uuid" : "index_name","shard_id" : 52,"reason" : "IndexShardSnapshotFailedException[error deleting index file [pending-index-5] during cleanup]; nested: NoSuchFileException[Blob [pending-index-5] does not exist]; ","node_id" : "pPm9jafyTjyMk0T5A101xA","status" : "INTERNAL_SERVER_ERROR"}],"shards":{"total":10,"failed":1,"successful":10}}]}`},
 	}
 	for ver, out := range tcs {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.RequestURI == "/_snapshot" {
-				fmt.Fprint(w, out[0])
-				return
-			}
-			fmt.Fprint(w, out[1])
-		}))
+		ts := httptest.NewServer(makeHandler(out))
 		defer ts.Close()
 
 		u, err := url.Parse(ts.URL)
